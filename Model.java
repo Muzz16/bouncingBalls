@@ -32,12 +32,18 @@ class Vec2 {
 		return new Vec2(normx, normy);
 	}
 
+	 void normalize(){
+		double mag = magnitude(new Vec2(x,y));
+		this.x = x/mag;
+		this.y = y/mag;
+	}
+
 	static double magnitude(Vec2 vec){
 		return Math.sqrt((vec.x * vec.x) + (vec.y * vec.y));
 	}
 
 	static Vec2 subtract(Vec2 vec1, Vec2 vec2){
-		return new Vec2(Math.abs(vec2.x - vec1.x),Math.abs(vec2.y - vec1.y) );
+		return new Vec2(vec2.x - vec1.x, vec2.y - vec1.y);
 	}
 
 
@@ -64,63 +70,79 @@ class Model {
 		// Initialize the model with a few balls
 		balls = new Ball[2];
 		balls[0] = new Ball(width / 3, height * 0.9, 1.2, 1.6, 0.2, 0.2);
-		balls[1] = new Ball( 2*width / 3, height * 0.9, -0.6, 0.6, 0.3,0.3);
+		balls[1] = new Ball( 2*width / 3, height * 0.9, -0.6, 0.6, 0.3,0.2);
 	}
-
-	double calcmv(double mass, double velocity){
-		return (mass*(velocity*velocity))/2;
-	}
-
 
 	void step(double deltaT) {
 		// TODO this method implements one step of simulation with a step deltaT
-		int index = 0;
-		for (Ball b : balls) {
-			for (int i = index+1; i < balls.length; i++){
+		for (int index = 0; index < balls.length; index++) {
+			for (int i = index + 1; i < balls.length; i++) {
 				Ball b2 = balls[i];
-				Vec2 ball1 = new Vec2(b.x,b.y);
-				Vec2 ball2 = new Vec2(b2.x,b2.y);
-				double dist = Vec2.dist(ball1,ball2);
-				if (dist < (b2.radius + b.radius)){
-					double b1mvx = calcmv(b.mass,Math.abs(b.vx));
-					double b1mvy = calcmv(b.mass,Math.abs(b.vy));
-					double b2mvx = calcmv(b2.mass,Math.abs(b2.vx));
-					double b2mvy = calcmv(b2.mass,Math.abs(b2.vy));
-					double dott = Math.abs(Vec2.dot(Vec2.normalize(Vec2.subtract(ball1,ball2)),Vec2.normalize(new Vec2(b.vx,b.vy))));
-					double netb2x = b2mvx - b1mvx*dott;
-					double netb2y = b2mvy - b1mvy*dott;
-					double netb1x = b1mvx- b2mvx*dott;
-					double netb1y = b1mvy - b2mvy*dott;
+				Ball b = balls[index];
+				Vec2 ball1Pos = new Vec2(b.x, b.y);
+				Vec2 ball2Pos = new Vec2(b2.x, b2.y);
+				double dist = Vec2.dist(ball2Pos, ball1Pos); // distance between the balls
+
+				if (dist <= (b2.radius + b.radius)) { // if we are colliding
+					double overlap = ((b2.radius + b.radius) - dist); // how much the balls are overlapping
+					// gives us a direction vector between them
+					Vec2 normalVector = Vec2.normalize(Vec2.subtract(ball2Pos, ball1Pos));
+
+					// offset ball to prevent it being inside the other ball
+
+					// divide by 2 because both balls will move
+					b.x += overlap * normalVector.x * 0.5f;
+					b.y += overlap * normalVector.y * 0.5f;
+
+					b2.x -= overlap * normalVector.x * 0.5f;
+					b2.y -= overlap * normalVector.y * 0.5f;
 
 
-					b.vy += netb1x;
-					b.vx += netb1y;
-					b2.vy += netb2x;
-					b2.vx += netb2y;
-//test
+					Vec2 ball1V = new Vec2(b.vx, b.vy);
+					Vec2 ball2V = new Vec2(b2.vx, b2.vy);
 
+					// how much they move towards each other
+					Vec2 relativeVelocity = Vec2.subtract(ball2V, ball1V); // can be seen as total velocity
 
-					if (Vec2.dist(ball1,ball2) < (b2.radius + b.radius)) {
-						Vec2 temp = Vec2.normalize(new Vec2(b.vx, b.vy));
-						b.y += temp.y * b.vy * deltaT;
-						b.x += temp.x * b.vx * deltaT;
-						Vec2 temp1 = Vec2.normalize(new Vec2(b2.vx, b2.vy));
-						b2.y += temp1.y * b2.vy * deltaT;
-						b2.x += temp1.x * b2.vx * deltaT;
+					// how much velocity is in direction of other ball
+					double velocityFactor = Vec2.dot(normalVector, relativeVelocity);
+					if (velocityFactor < 0) { // if they are moving towards each other
+
+						// let use get the ratio
+						double b1InverseMass = 1.0 / b.mass;
+						double b2InverseMass = 1.0 / b2.mass;
+
+						double velocity = -2.0 * velocityFactor / (b1InverseMass + b2InverseMass);
+
+						// add velocity along normalvector with ratio of mass
+						b.vx += velocity * normalVector.x * b1InverseMass;
+						b.vy += velocity * normalVector.y * b1InverseMass;
+
+						b2.vx -= velocity * normalVector.x * b2InverseMass;
+						b2.vy -= velocity * normalVector.y * b2InverseMass;
 					}
+
 				}
 			}
+		}
+
+		for (Ball b : balls) {
 			// detect collision with the border
-			if (b.x < b.radius || b.x > areaWidth - b.radius) {
+			if (b.x < b.radius) {
 				b.vx *= -1; // change direction of ball
+				b.x = b.radius;
+			} else if( b.x > areaWidth - b.radius){
+				b.vx *= -1;
+				b.x = areaWidth - b.radius;
 			}
+
+			// y axis wall check
 			if (b.y < b.radius) {
 				b.vy *= -1;
 				b.y = b.radius;
 			}
 			else if (b.y > areaHeight - b.radius) {
 				b.vy *= -1;
-
 			}
 
 			b.vy -= deltaT * 9.82;
@@ -128,7 +150,6 @@ class Model {
 			// compute new position according to the speed of the ball
 			b.x += deltaT * b.vx;
 			b.y += deltaT * b.vy;
-			index++;
 		}
 	}
 
