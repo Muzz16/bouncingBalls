@@ -102,24 +102,30 @@ class Model {
 					Vec2 ball2V = new Vec2(b2.vx, b2.vy);
 
 					// how much they move towards each other
-					Vec2 relativeVelocity = Vec2.subtract(ball2V, ball1V); // can be seen as total velocity
+					Vec2 relativeVelocity = Vec2.subtract(ball2V, ball1V); // can be seen as total relevant velocity
 
 					// how much velocity is in direction of other ball
 					double velocityFactor = Vec2.dot(normalVector, relativeVelocity);
 					if (velocityFactor < 0) { // if they are moving towards each other
+						/*
+						If each particle come in with F = MA then any hit particle must be affected by
+						A = F/M, where F then would be the force from the other particle
+						the relativeAcceleration would then be expressed as A1 - A2
+						where A1 = F2/M1 and A2 = F1/M2
+						so we have relativeAcceleration = F2/M1 + F2/M2 by newtons third law of motion
+						which is same as relativeAcceleration = F2( (1/m1) + (1/m2))
+						the relativeVelocity is just the integral of this.
+						relativeVelocity = F2( (1/m1) + (1/m2))
+						 */
 
-						// let use get the ratio
-						double b1InverseMass = 1.0 / b.mass;
-						double b2InverseMass = 1.0 / b2.mass;
-
-						double velocity = -2.0 * velocityFactor / (b1InverseMass + b2InverseMass);
+						double impulse = -2.0 * velocityFactor / ((1 / b.mass) + (1 / b2.mass));
 
 						// add velocity along normalvector with ratio of mass
-						b.vx += velocity * normalVector.x * b1InverseMass;
-						b.vy += velocity * normalVector.y * b1InverseMass;
+						b.vx += impulse * normalVector.x / b.mass; // how much velocity for ball1 in x change
+						b.vy += impulse * normalVector.y / b.mass;
 
-						b2.vx -= velocity * normalVector.x * b2InverseMass;
-						b2.vy -= velocity * normalVector.y * b2InverseMass;
+						b2.vx -= impulse * normalVector.x / b2.mass;
+						b2.vy -= impulse * normalVector.y / b2.mass; // how much velocity for ball2 in y change
 					}
 
 				}
