@@ -114,8 +114,9 @@ class Model {
 						where A1 = F2/M1 and A2 = F1/M2
 						so we have relativeAcceleration = F2/M1 + F2/M2 by newtons third law of motion
 						which is same as relativeAcceleration = F2( (1/m1) + (1/m2))
-						the relativeVelocity is just the integral of this.
-						relativeVelocity = F2( (1/m1) + (1/m2))
+						the how much velocity change is the integral of this.
+						relativeVelocityChange = F2( (1/m1) + (1/m2))
+						F2 = relativeVelocityChange / ( (1/m1) + (1/m2))
 						 */
 
 						double impulse = -2.0 * velocityFactor / ((1 / b.mass) + (1 / b2.mass));
