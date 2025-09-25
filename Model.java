@@ -70,7 +70,7 @@ class Model {
 		// Initialize the model with a few balls
 		balls = new Ball[2];
 		balls[0] = new Ball(width / 3, height * 0.9, 1.2, 1.6, 0.2, 0.2);
-		balls[1] = new Ball( 2*width / 3, height * 0.9, -0.6, 0.6, 0.3,0.2);
+		balls[1] = new Ball( 2*width / 3, height * 0.9, -0.6, 0.6, 0.3,0.4);
 	}
 
 	void step(double deltaT) {
@@ -101,32 +101,27 @@ class Model {
 					Vec2 ball1V = new Vec2(b.vx, b.vy);
 					Vec2 ball2V = new Vec2(b2.vx, b2.vy);
 
-					// how much they move towards each other
-					Vec2 relativeVelocity = Vec2.subtract(ball2V, ball1V); // can be seen as total relevant velocity
+					// how much they move towards each other before collision
+					Vec2 relativeVelocity = Vec2.subtract(ball2V, ball1V);
+					Vec2 momentumBeforeCollision = new Vec2(b.mass*(b.vx) + b2.mass*(b2.vx), b.mass*(b.vy) + b2.mass*(b2.vy));
+
 
 					// how much velocity is in direction of other ball
 					double velocityFactor = Vec2.dot(normalVector, relativeVelocity);
+
 					if (velocityFactor < 0) { // if they are moving towards each other
-						/*
-						If each particle come in with F = MA then any hit particle must be affected by
-						A = F/M, where F then would be the force from the other particle
-						the relativeAcceleration would then be expressed as A1 - A2
-						where A1 = F2/M1 and A2 = F1/M2
-						so we have relativeAcceleration = F2/M1 + F2/M2 by newtons third law of motion
-						which is same as relativeAcceleration = F2( (1/m1) + (1/m2))
-						the how much velocity change is the integral of this.
-						relativeVelocityChange = F2( (1/m1) + (1/m2))
-						F2 = relativeVelocityChange / ( (1/m1) + (1/m2))
-						 */
 
-						double impulse = -2.0 * velocityFactor / ((1 / b.mass) + (1 / b2.mass));
+					// velocity after collision should be negative relativeVelocity
+						Vec2 newRelativeVelocity = new Vec2(-relativeVelocity.x, -relativeVelocity.y);
+						Vec2 bvxy = new Vec2((momentumBeforeCollision.x + b2.mass*newRelativeVelocity.x) / (b.mass + b2.mass), (momentumBeforeCollision.y + b2.mass*newRelativeVelocity.y) / (b.mass + b2.mass));
+						Vec2 b2vxy = new Vec2((momentumBeforeCollision.x - b.mass*newRelativeVelocity.x) / (b.mass + b2.mass), (momentumBeforeCollision.y - b.mass*newRelativeVelocity.y) / (b.mass + b2.mass));
 
-						// add velocity along normalvector with ratio of mass
-						b.vx += impulse * normalVector.x / b.mass; // how much velocity for ball1 in x change
-						b.vy += impulse * normalVector.y / b.mass;
 
-						b2.vx -= impulse * normalVector.x / b2.mass;
-						b2.vy -= impulse * normalVector.y / b2.mass; // how much velocity for ball2 in y change
+						b.vx = bvxy.x;
+						b.vy = bvxy.y;
+
+						b2.vx = b2vxy.x;
+						b2.vy = b2vxy.y;
 					}
 
 				}
