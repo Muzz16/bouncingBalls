@@ -87,6 +87,7 @@ class Model {
 					double overlap = ((b2.radius + b.radius) - dist); // how much the balls are overlapping
 					// gives us a direction vector between them
 					Vec2 normalVector = Vec2.normalize(Vec2.subtract(ball2Pos, ball1Pos));
+					Vec2 tangentVector = new Vec2(-normalVector.y, normalVector.x);
 
 					// offset ball to prevent it being inside the other ball
 
@@ -101,27 +102,37 @@ class Model {
 					Vec2 ball1V = new Vec2(b.vx, b.vy);
 					Vec2 ball2V = new Vec2(b2.vx, b2.vy);
 
+					double ball1vN = Vec2.dot(normalVector, ball1V);
+					double ball1vT = Vec2.dot(tangentVector, ball1V);
+					double ball2vN = Vec2.dot(normalVector, ball2V);
+					double ball2vT = Vec2.dot(tangentVector, ball2V);
+
+
 					// how much they move towards each other before collision
 					Vec2 relativeVelocity = Vec2.subtract(ball2V, ball1V);
-					Vec2 momentumBeforeCollision = new Vec2(b.mass*(b.vx) + b2.mass*(b2.vx), b.mass*(b.vy) + b2.mass*(b2.vy));
-
 
 					// how much velocity is in direction of other ball
 					double velocityFactor = Vec2.dot(normalVector, relativeVelocity);
 
 					if (velocityFactor < 0) { // if they are moving towards each other
+						double relativeVelN = ball2vN - ball1vN;
+						double momentum = b.mass*ball1vN + b2.mass*ball2vN;
+						double bN = (momentum + b2.mass*relativeVelN) / (b.mass + b2.mass);
+						double b2N = (momentum - b.mass*relativeVelN) / (b.mass + b2.mass);
+						//b.mass*ball1vN + b2.mass*ball2vN = b.mass*someval1 + b2.mass*someval2;
 
-					// velocity after collision should be negative relativeVelocity
-						Vec2 newRelativeVelocity = new Vec2(-relativeVelocity.x, -relativeVelocity.y);
-						Vec2 bvxy = new Vec2((momentumBeforeCollision.x + b2.mass*newRelativeVelocity.x) / (b.mass + b2.mass), (momentumBeforeCollision.y + b2.mass*newRelativeVelocity.y) / (b.mass + b2.mass));
-						Vec2 b2vxy = new Vec2((momentumBeforeCollision.x - b.mass*newRelativeVelocity.x) / (b.mass + b2.mass), (momentumBeforeCollision.y - b.mass*newRelativeVelocity.y) / (b.mass + b2.mass));
+						Vec2 b1n = new Vec2(bN * normalVector.x, bN * normalVector.y);
+						Vec2 b1t = new Vec2(ball1vT * tangentVector.x, ball1vT * tangentVector.y);
+
+						Vec2 b2n = new Vec2(b2N * normalVector.x, b2N * normalVector.y);
+						Vec2 b2t = new Vec2(ball2vT * tangentVector.x, ball2vT * tangentVector.y);
 
 
-						b.vx = bvxy.x;
-						b.vy = bvxy.y;
+						b.vx = b1n.x + b1t.x;
+						b.vy = b1n.y + b1t.y;
 
-						b2.vx = b2vxy.x;
-						b2.vy = b2vxy.y;
+						b2.vx = b2n.x + b2t.x;
+						b2.vy = b2n.y + b2t.y;
 					}
 
 				}
