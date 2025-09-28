@@ -118,7 +118,7 @@ class Model {
 						double relativeVelN = ball2vN - ball1vN;
 						double momentum = b.mass*ball1vN + b2.mass*ball2vN;
 
-						// force in normal direction
+						// velocity in normal direction
 						double bN = (momentum + b2.mass*relativeVelN) / (b.mass + b2.mass);
 						double b2N = (momentum - b.mass*relativeVelN) / (b.mass + b2.mass);
 						// no need for tangent calculations
