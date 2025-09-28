@@ -117,14 +117,19 @@ class Model {
 					if (velocityFactor < 0) { // if they are moving towards each other
 						double relativeVelN = ball2vN - ball1vN;
 						double momentum = b.mass*ball1vN + b2.mass*ball2vN;
+
+						// force in normal direction
 						double bN = (momentum + b2.mass*relativeVelN) / (b.mass + b2.mass);
 						double b2N = (momentum - b.mass*relativeVelN) / (b.mass + b2.mass);
-						//b.mass*ball1vN + b2.mass*ball2vN = b.mass*someval1 + b2.mass*someval2;
+						// no need for tangent calculations
 
+						// convert it back
 						Vec2 b1n = new Vec2(bN * normalVector.x, bN * normalVector.y);
 						Vec2 b1t = new Vec2(ball1vT * tangentVector.x, ball1vT * tangentVector.y);
 
+						// amount of velocity in normal direction
 						Vec2 b2n = new Vec2(b2N * normalVector.x, b2N * normalVector.y);
+						// amount of velocity in tangent direction
 						Vec2 b2t = new Vec2(ball2vT * tangentVector.x, ball2vT * tangentVector.y);
 
 
